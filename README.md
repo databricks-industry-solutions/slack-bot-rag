@@ -133,7 +133,7 @@ mvn clean package
 Run application
 
 ```shell
-java -jar target/slack-bot-genai-1.0-SNAPSHOT.jar --spring.config.location=/path/to/application.properties
+java -jar target/slack-bot-rag-1.0-SNAPSHOT.jar --spring.config.location=/path/to/application.properties
 ```
 
 Alternatively, package as docker container. The intent would be to run it under our 
