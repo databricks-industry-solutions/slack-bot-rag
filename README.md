@@ -1,4 +1,4 @@
-<img src=https://d1r5llqwmkrl74.cloudfront.net/notebooks/fsi/fs-lakehouse-logo-transparent.png width="600px">
+<a href="https://www.databricks.com/solutions/accelerators"><img src='https://github.com/databricks-industry-solutions/.github/raw/main/profile/solacc_logo_wide.png'></img></a>
 
 # GenAI slack bot
 
