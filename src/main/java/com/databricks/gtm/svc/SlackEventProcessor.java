@@ -29,7 +29,7 @@ import static com.slack.api.model.block.element.BlockElements.asElements;
 import static com.slack.api.model.block.element.BlockElements.button;
 
 @Component
-public class SlackEventProcessor implements SlackSvc {
+public class SlackEventProcessor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SlackEventProcessor.class);
 
@@ -124,11 +124,11 @@ public class SlackEventProcessor implements SlackSvc {
                             button(b -> b
                                     .text(plainText(pt -> pt.emoji(true).text("Yes :thumbsup:")))
                                     .value(event.getTs())
-                                    .actionId(MESSAGE_FEEDBACK_POSITIVE)),
+                                    .actionId(SlackSvc.MESSAGE_FEEDBACK_POSITIVE)),
                             button(b -> b
                                     .text(plainText(pt -> pt.emoji(true).text("No :thumbsdown:")))
                                     .value(event.getTs())
-                                    .actionId(MESSAGE_FEEDBACK_NEGATIVE))
+                                    .actionId(SlackSvc.MESSAGE_FEEDBACK_POSITIVE))
                     )))
             ));
         });

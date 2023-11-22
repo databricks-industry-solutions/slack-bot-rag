@@ -2,7 +2,7 @@ package com.databricks.gtm;
 
 import com.databricks.gtm.model.AuditEvent;
 import com.databricks.gtm.model.AuditEventId;
-import com.databricks.gtm.svc.SlackEventHandler;
+import com.databricks.gtm.svc.SlackSvcImpl;
 import com.databricks.gtm.svc.SlackSvc;
 import com.slack.api.bolt.App;
 import com.slack.api.bolt.AppConfig;
@@ -19,7 +19,7 @@ import org.springframework.jms.core.JmsTemplate;
 @Configuration
 public class SlackConfiguration {
 
-    private final SlackEventHandler slackEventHandler;
+    private final SlackSvcImpl slackSvcImpl;
 
     @Value("${slack.bot.token}")
     private String slackBotToken;
@@ -29,8 +29,8 @@ public class SlackConfiguration {
 
     private JmsTemplate jmsTemplate;
 
-    public SlackConfiguration(SlackEventHandler slackEventHandler) {
-        this.slackEventHandler = slackEventHandler;
+    public SlackConfiguration(SlackSvcImpl slackSvcImpl) {
+        this.slackSvcImpl = slackSvcImpl;
     }
 
     private AuditEvent buildEvent(BlockActionRequest req, boolean isUseful) {
@@ -58,8 +58,8 @@ public class SlackConfiguration {
         );
 
         // We subscribe to AppMentionEvent and Message event
-        app.event(AppMentionEvent.class, slackEventHandler::handleAppMention);
-        app.event(MessageEvent.class, slackEventHandler::handleMessage);
+        app.event(AppMentionEvent.class, slackSvcImpl::handleAppMention);
+        app.event(MessageEvent.class, slackSvcImpl::handleMessage);
 
         // We also capture message positive feedback as interactive message
         app.blockAction(SlackSvc.MESSAGE_FEEDBACK_POSITIVE, (req, ctx) -> {

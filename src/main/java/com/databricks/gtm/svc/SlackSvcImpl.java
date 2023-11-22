@@ -16,12 +16,13 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SlackEventHandler {
+public class SlackSvcImpl implements SlackSvc {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SlackEventHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SlackSvcImpl.class);
 
     private JmsTemplate jmsTemplate;
 
+    @Override
     public Response handleAppMention(EventsApiPayload<AppMentionEvent> eventsApiPayload, EventContext context) {
 
         AppMentionEvent event = eventsApiPayload.getEvent();
@@ -40,6 +41,7 @@ public class SlackEventHandler {
         return context.ack();
     }
 
+    @Override
     public Response handleMessage(EventsApiPayload<MessageEvent> messagePayload, EventContext context) {
 
         MessageEvent event = messagePayload.getEvent();
