@@ -113,6 +113,13 @@ For reference, our scopes defined for our bot are as follows.
 
 ![slack_app_config_scopes.png](images%2Fslack_app_config_scopes.png)
 
+**Deploy your application**
+
+When installing your application, you will be asked to specify a channel to deploy bot to. Bot will only monitor 
+actions and events happening in this specific channel.
+
+![slack_app_config_install.png](images%2Fslack_app_config_install.png)
+
 **Configure your java application**
 
 Finally, report the bot signing key and bot token Id to your java configuration file.
