@@ -2,8 +2,8 @@ package com.databricks.gtm;
 
 import com.databricks.gtm.model.AuditEvent;
 import com.databricks.gtm.model.AuditEventId;
-import com.databricks.gtm.svc.SlackSvcImpl;
 import com.databricks.gtm.svc.SlackSvc;
+import com.databricks.gtm.svc.SlackSvcImpl;
 import com.slack.api.bolt.App;
 import com.slack.api.bolt.AppConfig;
 import com.slack.api.bolt.request.builtin.BlockActionRequest;

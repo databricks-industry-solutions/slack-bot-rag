@@ -2,7 +2,10 @@ package com.databricks.gtm.svc;
 
 
 import com.databricks.gtm.JmsConfiguration;
+import com.databricks.gtm.RagBusinessException;
+import com.databricks.gtm.RagTechnicalException;
 import com.databricks.gtm.model.AuditEvent;
+import com.databricks.gtm.model.RagResponse;
 import com.databricks.gtm.model.SlackConversation;
 import com.databricks.gtm.model.SlackEvent;
 import com.slack.api.bolt.App;
@@ -37,7 +40,7 @@ public class SlackEventProcessor {
     private App slackService;
     private AuditLogSvc auditLogSvc;
 
-    private List<SlackConversation> getThreadHistory(SlackEvent event) throws SlackApiException, IOException {
+    private List<SlackConversation> getThreadHistory(SlackEvent event) {
 
         // Get conversation history
         // As we always respond in a thread, we can find the history since threadTs
@@ -50,7 +53,14 @@ public class SlackEventProcessor {
                 .build();
 
         // Reconstruct conversation history between both and human
-        ConversationsRepliesResponse history = slackService.getClient().conversationsReplies(request);
+        ConversationsRepliesResponse history;
+        try {
+            history = slackService.getClient().conversationsReplies(request);
+        } catch (IOException | SlackApiException e) {
+            LOGGER.error("Error while fetching thread history for thread " + event.getThreadTs());
+            return new ArrayList<>();
+        }
+
         List<SlackConversation> conversation = new ArrayList<>();
 
         if (history.isOk()) {
@@ -76,15 +86,24 @@ public class SlackEventProcessor {
             }
             // Don't forget last record
             conversation.add(latestReply);
+            LOGGER.info("Conversation history is {} interaction(s) long", conversation.size());
+        } else {
+            LOGGER.warn("Could not find any history in thread " + event.getThreadTs());
         }
-
-        LOGGER.info("Conversation history is {} interaction(s) long", conversation.size());
         return conversation;
     }
 
     @JmsListener(destination = JmsConfiguration.SLACK_FEEDBACK_QUEUE, containerFactory = "queueFactory")
-    public void receiveFeedback(AuditEvent event) throws SlackApiException, IOException {
+    public void receiveFeedback(AuditEvent event) throws RagBusinessException, RagTechnicalException {
         auditLogSvc.feedback(event);
+    }
+
+    private String getMarkdownFromLinks(List<String> links) {
+        StringBuilder sb = new StringBuilder();
+        for (String link : links) {
+            sb.append("- ").append(link).append("\n");
+        }
+        return sb.toString();
     }
 
     @JmsListener(destination = JmsConfiguration.SLACK_INTAKE_QUEUE, containerFactory = "queueFactory")
@@ -99,25 +118,34 @@ public class SlackEventProcessor {
                     .channel(event.getChannelId())
                     .threadTs(event.getTs());
 
-            // Get conversation history
-            List<SlackConversation> conversation = new ArrayList<>();
-            if (StringUtils.isNotEmpty(event.getThreadTs())) {
-                try {
-                    conversation = getThreadHistory(event);
-                } catch (Exception e) {
-                    LOGGER.error("Could not get conversation history", e);
-                }
+            // 1. Get conversation history
+            List<SlackConversation> conversation = getThreadHistory(event)
+            conversation.add(new SlackConversation(SlackConversation.USER_HUMAN, event.getText()));
+
+            // 2. Query our LLM bots with RAG
+            RagResponse response;
+            try {
+                response = genAiSvc.chat(conversation);
+            } catch (RagBusinessException | RagTechnicalException e) {
+                LOGGER.error("Error while querying MLFlow model", e);
+                throw new RuntimeException(e);
             }
 
-            // Query our LLM bots with RAG
-            conversation.add(new SlackConversation(SlackConversation.USER_HUMAN, event.getText()));
-            String optimalResponse = genAiSvc.chat(conversation);
-            auditLogSvc.record(event, optimalResponse);
+            // 3. Persist a log record
+            try {
+                auditLogSvc.record(event, response);
+            } catch (RagTechnicalException e) {
+                LOGGER.error("Could not persist audit record", e);
+            }
 
-            return responseBuilder.text(optimalResponse).blocks(asBlocks(
+            // 4. Return formatted response to slack
+            return responseBuilder.text(response.getAnswer()).blocks(asBlocks(
                     section(section -> section.text(markdownText("*Here is an answer, just for you:*"))),
                     divider(),
-                    section(section -> section.text(markdownText(optimalResponse))),
+                    section(section -> section.text(markdownText(response.getAnswer()))),
+                    divider(),
+                    section(section -> section.text(markdownText("References"))),
+                    section(section -> section.text(markdownText(getMarkdownFromLinks(response.getLinks())))),
                     divider(),
                     section(section -> section.text(markdownText("Please provide feedback"))),
                     actions(actions -> actions.elements(asElements(
@@ -128,7 +156,7 @@ public class SlackEventProcessor {
                             button(b -> b
                                     .text(plainText(pt -> pt.emoji(true).text("No :thumbsdown:")))
                                     .value(event.getTs())
-                                    .actionId(SlackSvc.MESSAGE_FEEDBACK_POSITIVE))
+                                    .actionId(SlackSvc.MESSAGE_FEEDBACK_NEGATIVE))
                     )))
             ));
         });

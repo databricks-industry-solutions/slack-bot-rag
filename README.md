@@ -2,13 +2,13 @@
 
 # GenAI slack bot
 
-*Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, 
+*Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam,
 eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores 
-eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, 
-consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam 
-quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, 
-nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse 
+Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores
+eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet,
+consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam
+quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam,
+nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse
 quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?*
 
 [![DBR](https://img.shields.io/badge/DBR-14.2ML-red?logo=databricks&style=for-the-badge)](https://docs.databricks.com/release-notes/runtime/14.2ml.html)
@@ -21,26 +21,45 @@ ___
 
 ___
 
+## Motivation and considerations
+
+Everyone can follow some tutorial and build basic POCs on genAI + RAG.
+Unfortunately, moving from a POC to actionable LLM requires engineering efforts.
+
+**Out of scope is the RAG model itself** that we delegate to a mlflow serving endpoint on databricks.
+For more information, please refer to our gold standard
+[demo](https://www.databricks.com/resources/demos/tutorials/data-science-and-ai/lakehouse-ai-deploy-your-llm-chatbot)
+that will be kept up to date as new products are released.
+
+While we appreciate we could have used another technology than Java, wrapping business logic and model within
+python stack, we wanted to separate both logics on purpose. The rationale is 2 folds:
+
+- Ensure independence of models, offering the ability for user to build different LLMs, different prompts, surfacing
+  models via a same endpoint that can easily be load balanced within impacting slack application.
+- Ensure engineering reliability and maintainability of a slack application to support larger scale deployments
+
+As a consequence, we relied on Java based application and spring framework to handle our core business logic.
+
 ## Business logic
 
 ![slack_bot](images/slack_interaction.png)
 
-Business logic is split in mainly 2 parts. 
-Section that listens to incoming messages (events) and write response in threads, 
+Business logic is split in mainly 2 parts.
+Section that listens to incoming messages (events) and write response in threads,
 and section that listens to customer feedback (actions) through the use of interactive buttons as per above screenshot.
 
 **Process workflow for event listeners**
 
-Given strict latency requirements from slack applications (< 3sec) and relative latency of any genAI model, 
-our process is defined as asynchronous, leveraging spring JMS capabilities. 
-Working for local development to small-medium deployments, the same can be easily upgraded to enterprise message bus 
+Given strict latency requirements from slack applications (< 3sec) and relative latency of any genAI model,
+our process is defined as asynchronous, leveraging spring JMS capabilities.
+Working for local development to small-medium deployments, the same can be easily upgraded to enterprise message bus
 (e.g. kafka) if needed. One may have to modify spring dependencies and configuration.
 
 Since we may want to audit all requests / respond sent to users, we persist our records to an online datastore.
-In memory H2 for local development, the same can easily be configured to your database of choice using spring boot 
+In memory H2 for local development, the same can easily be configured to your database of choice using spring boot
 configuration.
 
-Finally, we delegate request together with conversational history (in active thread) to our model on MLFlow. 
+Finally, we delegate request together with conversational history (in active thread) to our model on MLFlow.
 The latter will handle our RAG strategy and respond back with adequate answer that we attach
 back to user thread on slack. Process is defined in high level diagram below.
 
@@ -48,18 +67,17 @@ back to user thread on slack. Process is defined in high level diagram below.
 
 **Process workflow for action listeners**
 
-For each interaction, we offer the possibility for user to capture customer feedback through the use of 
-interactive messages (i.e. Yes or No button). 
+For each interaction, we offer the possibility for user to capture customer feedback through the use of
+interactive messages (i.e. Yes or No button).
 The aim is to be able to adapt your RAG strategy or consider fine-tuning your model.
 For that purpose, we leverage our persistence layer by updating our conversation record
 with a simple flag (useful or not) together with last updated timestamp.
 
 Similar to our event listener, our process may be handled asynchronously for larger scale deployments.
-(though we expect any online datastore to reply in second). 
+(though we expect any online datastore to reply in second).
 We leverage our JMS component and acknowledge action (i.e. user clicking on button).
 
 ![uml2](images/slack_uml_2.png)
-
 
 ## Slack configuration
 
@@ -77,7 +95,8 @@ conversation within a given thread and provide our genAI capability with all con
 more relevant output.
 
 The URL of our Java application will be required to start listening to events. Application should support HTTPS and
-listens to endpoint `/slack/events`. For local development, a reverse proxy might be needed as per the following example:
+listens to endpoint `/slack/events`. For local development, a reverse proxy might be needed as per the following
+example:
 
 ```shell
 ngrok http https://localhost:8443
@@ -103,7 +122,7 @@ need to support interactivity and shortcut. Please note that URL will be the sam
 ![slack_app_config_bot.png](images%2Fslack_app_config_bot.png)
 
 Though already available as an application, we won't be able to mention our bot and
-kick off genAI augmented conversation without creating our "system user", 
+kick off genAI augmented conversation without creating our "system user",
 marking our newly created bot as online and modifying name, logo and description if needed.
 
 **Ensure scopes are correct**
@@ -115,7 +134,7 @@ For reference, our scopes defined for our bot are as follows.
 
 **Deploy your application**
 
-When installing your application, you will be asked to specify a channel to deploy bot to. Bot will only monitor 
+When installing your application, you will be asked to specify a channel to deploy bot to. Bot will only monitor
 actions and events happening in this specific channel.
 
 ![slack_app_config_install.png](images%2Fslack_app_config_install.png)
@@ -143,8 +162,8 @@ Run application
 java -jar target/slack-bot-rag-1.0-SNAPSHOT.jar --spring.config.location=/path/to/application.properties
 ```
 
-Alternatively, package as docker container. The intent would be to run it under our 
-[Lakehouse Apps](https://www.databricks.com/blog/introducing-lakehouse-apps) motion when GA, 
+Alternatively, package as docker container. The intent would be to run it under our
+[Lakehouse Apps](https://www.databricks.com/blog/introducing-lakehouse-apps) motion when GA,
 removing as much as burden possible for DevOps teams and offering additional context
 (more personalized RAG based on user information and available data).
 
@@ -158,7 +177,7 @@ mvn spring-boot:build-image
 [https://databricks.com/db-license-source]. All included or referenced third party libraries are subject to the licenses
 set forth below.
 
-| library     | description         | license   | source                                     |
-|-------------|---------------------|-----------|--------------------------------------------|
-| Spring-boot | J2E                 | Apache v2 | https://spring.io/projects/spring-boot     |
-| bot-servlet | Slack API           | Apache v2 | https://mvnrepository.com/artifact/com.slack.api/bolt-servlet/1.36.0        |
+| library     | description | license   | source                                                               |
+|-------------|-------------|-----------|----------------------------------------------------------------------|
+| Spring-boot | J2E         | Apache v2 | https://spring.io/projects/spring-boot                               |
+| bot-servlet | Slack API   | Apache v2 | https://mvnrepository.com/artifact/com.slack.api/bolt-servlet/1.36.0 |

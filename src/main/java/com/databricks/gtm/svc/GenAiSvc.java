@@ -1,5 +1,8 @@
 package com.databricks.gtm.svc;
 
+import com.databricks.gtm.RagBusinessException;
+import com.databricks.gtm.RagTechnicalException;
+import com.databricks.gtm.model.RagResponse;
 import com.databricks.gtm.model.SlackConversation;
 
 import java.util.List;
@@ -14,6 +17,6 @@ public interface GenAiSvc {
      * @param conversationHistory all the previous interactions between the bot and a user on a given thread
      * @return Most relevant response from genAI we can surface back to end user.
      */
-    public String chat(List<SlackConversation> conversationHistory);
+    public RagResponse chat(List<SlackConversation> conversationHistory) throws RagBusinessException, RagTechnicalException;
 
 }

@@ -14,8 +14,9 @@ public interface SlackSvc {
     /**
      * Reading from slack events whenever our bot is mentioned. We will be creating a new thread
      * with our genAI response
+     *
      * @param eventsApiPayload the original event received from slack
-     * @param context the slack context we need to reply to
+     * @param context          the slack context we need to reply to
      * @return an acknowledgement to Slack. Response will be sent asynchronously later upon genAI completion.
      */
     public Response handleAppMention(EventsApiPayload<AppMentionEvent> eventsApiPayload, EventContext context);
@@ -23,8 +24,9 @@ public interface SlackSvc {
     /**
      * Reading from slack events whenever a new message is posted to an active thread.
      * We will continue conversation with user, taking conversation history as additional context
+     *
      * @param messagePayload the original event received from slack
-     * @param context the slack context we need to reply to
+     * @param context        the slack context we need to reply to
      * @return an acknowledgement to Slack. Response will be sent asynchronously later upon genAI completion.
      */
     public Response handleMessage(EventsApiPayload<MessageEvent> messagePayload, EventContext context);
