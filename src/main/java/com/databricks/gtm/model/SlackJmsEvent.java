@@ -3,14 +3,14 @@ package com.databricks.gtm.model;
 
 import java.io.Serializable;
 
-public class SlackEvent implements Serializable {
+public class SlackJmsEvent implements Serializable {
 
     private String channelId;
     private String ts;
     private String text;
     private String threadTs;
 
-    public SlackEvent(String channelId, String ts, String threadTs, String text) {
+    public SlackJmsEvent(String channelId, String ts, String threadTs, String text) {
         this.channelId = channelId;
         this.ts = ts;
         this.threadTs = threadTs;

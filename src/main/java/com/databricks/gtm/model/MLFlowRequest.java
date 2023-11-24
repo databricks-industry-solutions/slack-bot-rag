@@ -1,6 +1,6 @@
 package com.databricks.gtm.model;
 
-public class SlackConversation {
+public class MLFlowRequest {
 
     public static String USER_BOT = "BOT";
     public static String USER_HUMAN = "HUMAN";
@@ -8,7 +8,7 @@ public class SlackConversation {
     String user;
     String text;
 
-    public SlackConversation(String user, String text) {
+    public MLFlowRequest(String user, String text) {
         this.user = user;
         this.text = text;
     }

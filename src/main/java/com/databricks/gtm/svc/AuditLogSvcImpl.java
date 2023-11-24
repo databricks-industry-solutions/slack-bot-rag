@@ -5,8 +5,8 @@ import com.databricks.gtm.RagTechnicalException;
 import com.databricks.gtm.dao.AuditLogDao;
 import com.databricks.gtm.model.AuditEvent;
 import com.databricks.gtm.model.AuditEventId;
-import com.databricks.gtm.model.RagResponse;
-import com.databricks.gtm.model.SlackEvent;
+import com.databricks.gtm.model.MLFlowResponse;
+import com.databricks.gtm.model.SlackJmsEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ public class AuditLogSvcImpl implements AuditLogSvc {
     private AuditLogDao dao;
 
     @Override
-    public void record(SlackEvent event, RagResponse response) throws RagTechnicalException {
+    public void record(SlackJmsEvent event, MLFlowResponse response) throws RagTechnicalException {
         LOGGER.info("Persisting new record to audit table");
         AuditEvent auditEvent = new AuditEvent();
         AuditEventId auditEventId = new AuditEventId();

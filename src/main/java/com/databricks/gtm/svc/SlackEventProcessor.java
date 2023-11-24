@@ -5,9 +5,9 @@ import com.databricks.gtm.JmsConfiguration;
 import com.databricks.gtm.RagBusinessException;
 import com.databricks.gtm.RagTechnicalException;
 import com.databricks.gtm.model.AuditEvent;
-import com.databricks.gtm.model.RagResponse;
-import com.databricks.gtm.model.SlackConversation;
-import com.databricks.gtm.model.SlackEvent;
+import com.databricks.gtm.model.MLFlowResponse;
+import com.databricks.gtm.model.MLFlowRequest;
+import com.databricks.gtm.model.SlackJmsEvent;
 import com.slack.api.bolt.App;
 import com.slack.api.methods.SlackApiException;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
@@ -40,7 +40,7 @@ public class SlackEventProcessor {
     private App slackService;
     private AuditLogSvc auditLogSvc;
 
-    private List<SlackConversation> getThreadHistory(SlackEvent event) {
+    private List<MLFlowRequest> getThreadHistory(SlackJmsEvent event) {
 
         // Get conversation history
         // As we always respond in a thread, we can find the history since threadTs
@@ -61,26 +61,26 @@ public class SlackEventProcessor {
             return new ArrayList<>();
         }
 
-        List<SlackConversation> conversation = new ArrayList<>();
+        List<MLFlowRequest> conversation = new ArrayList<>();
 
         if (history.isOk()) {
-            SlackConversation latestReply = null;
+            MLFlowRequest latestReply = null;
             for (Message message : history.getMessages()) {
-                String user = SlackConversation.USER_HUMAN;
+                String user = MLFlowRequest.USER_HUMAN;
                 String text = message.getText();
                 if (StringUtils.isNotEmpty(message.getBotId())) {
-                    user = SlackConversation.USER_BOT;
+                    user = MLFlowRequest.USER_BOT;
                 }
                 if (latestReply == null) { // first conversation in that thread
-                    latestReply = new SlackConversation(user, text);
+                    latestReply = new MLFlowRequest(user, text);
                 } else {
                     if (latestReply.getUser().equals(user)) {
                         // Same user conversing, appending to context
-                        latestReply = new SlackConversation(user, latestReply.getText() + "\n" + text);
+                        latestReply = new MLFlowRequest(user, latestReply.getText() + "\n" + text);
                     } else {
                         // conversation has changed hands, new record
                         conversation.add(latestReply);
-                        latestReply = new SlackConversation(user, text);
+                        latestReply = new MLFlowRequest(user, text);
                     }
                 }
             }
@@ -107,7 +107,7 @@ public class SlackEventProcessor {
     }
 
     @JmsListener(destination = JmsConfiguration.SLACK_INTAKE_QUEUE, containerFactory = "queueFactory")
-    public void receiveMessage(SlackEvent event) throws SlackApiException, IOException {
+    public void receiveMessage(SlackJmsEvent event) throws SlackApiException, IOException {
 
         LOGGER.info("Received message from queue {}", JmsConfiguration.SLACK_INTAKE_QUEUE);
 
@@ -119,11 +119,11 @@ public class SlackEventProcessor {
                     .threadTs(event.getTs());
 
             // 1. Get conversation history
-            List<SlackConversation> conversation = getThreadHistory(event)
-            conversation.add(new SlackConversation(SlackConversation.USER_HUMAN, event.getText()));
+            List<MLFlowRequest> conversation = getThreadHistory(event);
+            conversation.add(new MLFlowRequest(MLFlowRequest.USER_HUMAN, event.getText()));
 
             // 2. Query our LLM bots with RAG
-            RagResponse response;
+            MLFlowResponse response;
             try {
                 response = genAiSvc.chat(conversation);
             } catch (RagBusinessException | RagTechnicalException e) {

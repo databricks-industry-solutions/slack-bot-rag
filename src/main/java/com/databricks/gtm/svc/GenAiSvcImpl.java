@@ -4,8 +4,8 @@ import com.databricks.gtm.RagBusinessException;
 import com.databricks.gtm.RagTechnicalException;
 import com.databricks.gtm.model.MLFlowRequestWrapper;
 import com.databricks.gtm.model.MLFlowResponseWrapper;
-import com.databricks.gtm.model.RagResponse;
-import com.databricks.gtm.model.SlackConversation;
+import com.databricks.gtm.model.MLFlowResponse;
+import com.databricks.gtm.model.MLFlowRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +28,7 @@ public class GenAiSvcImpl implements GenAiSvc {
     private String mlflowApiUrl;
 
     @Override
-    public RagResponse chat(List<SlackConversation> conversationHistory) throws RagBusinessException, RagTechnicalException {
+    public MLFlowResponse chat(List<MLFlowRequest> conversationHistory) throws RagBusinessException, RagTechnicalException {
 
         LOGGER.info("Submitting request to MLFlow model");
 
@@ -38,11 +38,11 @@ public class GenAiSvcImpl implements GenAiSvc {
         headers.add("Authorization", "Bearer " + mlflowApiToken);
 
         // Prepare request
-        MLFlowRequestWrapper<SlackConversation> request = new MLFlowRequestWrapper<>(conversationHistory);
-        HttpEntity<MLFlowRequestWrapper<SlackConversation>> requestEntity = new HttpEntity<>(request, headers);
+        MLFlowRequestWrapper<MLFlowRequest> request = new MLFlowRequestWrapper<>(conversationHistory);
+        HttpEntity<MLFlowRequestWrapper<MLFlowRequest>> requestEntity = new HttpEntity<>(request, headers);
 
         // Prepare response
-        ResponseEntity<MLFlowResponseWrapper<RagResponse>> responseEntity;
+        ResponseEntity<MLFlowResponseWrapper<MLFlowResponse>> responseEntity;
         try {
             responseEntity = new RestTemplate().exchange(
                     mlflowApiUrl,
@@ -58,7 +58,7 @@ public class GenAiSvcImpl implements GenAiSvc {
 
         if (responseEntity.getBody() != null && responseEntity.getBody().getResponses() != null) {
             LOGGER.info("MLFlow call successful, received response");
-            RagResponse answer = responseEntity.getBody().getResponses().get(0);
+            MLFlowResponse answer = responseEntity.getBody().getResponses().get(0);
             LOGGER.debug(answer.getAnswer());
             return answer;
         } else {

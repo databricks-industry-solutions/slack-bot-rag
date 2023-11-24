@@ -2,7 +2,7 @@ package com.databricks.gtm.svc;
 
 
 import com.databricks.gtm.JmsConfiguration;
-import com.databricks.gtm.model.SlackEvent;
+import com.databricks.gtm.model.SlackJmsEvent;
 import com.slack.api.app_backend.events.payload.EventsApiPayload;
 import com.slack.api.bolt.context.builtin.EventContext;
 import com.slack.api.bolt.response.Response;
@@ -29,7 +29,7 @@ public class SlackSvcImpl implements SlackSvc {
 
         // We've been mentioned in a channel, not yet in a thread, let's start a new conversation
         if (StringUtils.isEmpty(event.getThreadTs())) {
-            SlackEvent eventToProcess = new SlackEvent(
+            SlackJmsEvent eventToProcess = new SlackJmsEvent(
                     event.getChannel(),
                     event.getTs(),
                     event.getThreadTs(),
@@ -48,7 +48,7 @@ public class SlackSvcImpl implements SlackSvc {
 
         // A message was received in an existing thread, our time to pick up that conversation
         if (StringUtils.isNotEmpty(event.getThreadTs())) {
-            SlackEvent eventToProcess = new SlackEvent(
+            SlackJmsEvent eventToProcess = new SlackJmsEvent(
                     event.getChannel(),
                     event.getTs(),
                     event.getThreadTs(),

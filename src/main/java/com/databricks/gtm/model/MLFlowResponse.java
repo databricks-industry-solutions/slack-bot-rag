@@ -2,7 +2,7 @@ package com.databricks.gtm.model;
 
 import java.util.List;
 
-public class RagResponse {
+public class MLFlowResponse {
 
     private String answer;
     private List<String> links;
