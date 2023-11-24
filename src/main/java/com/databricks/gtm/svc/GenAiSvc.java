@@ -1,7 +1,7 @@
 package com.databricks.gtm.svc;
 
-import com.databricks.gtm.RagBusinessException;
-import com.databricks.gtm.RagTechnicalException;
+import com.databricks.gtm.exceptions.BusinessException;
+import com.databricks.gtm.exceptions.TechnicalException;
 import com.databricks.gtm.model.MLFlowResponse;
 import com.databricks.gtm.model.MLFlowRequest;
 
@@ -17,6 +17,6 @@ public interface GenAiSvc {
      * @param conversationHistory all the previous interactions between the bot and a user on a given thread
      * @return Most relevant response from genAI we can surface back to end user.
      */
-    public MLFlowResponse chat(List<MLFlowRequest> conversationHistory) throws RagBusinessException, RagTechnicalException;
+    public MLFlowResponse chat(List<MLFlowRequest> conversationHistory) throws BusinessException, TechnicalException;
 
 }

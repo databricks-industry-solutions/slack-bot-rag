@@ -1,7 +1,7 @@
 package com.databricks.gtm.svc;
 
-import com.databricks.gtm.RagBusinessException;
-import com.databricks.gtm.RagTechnicalException;
+import com.databricks.gtm.exceptions.BusinessException;
+import com.databricks.gtm.exceptions.TechnicalException;
 import com.databricks.gtm.model.MLFlowRequestWrapper;
 import com.databricks.gtm.model.MLFlowResponseWrapper;
 import com.databricks.gtm.model.MLFlowResponse;
@@ -28,7 +28,7 @@ public class GenAiSvcImpl implements GenAiSvc {
     private String mlflowApiUrl;
 
     @Override
-    public MLFlowResponse chat(List<MLFlowRequest> conversationHistory) throws RagBusinessException, RagTechnicalException {
+    public MLFlowResponse chat(List<MLFlowRequest> conversationHistory) throws BusinessException, TechnicalException {
 
         LOGGER.info("Submitting request to MLFlow model");
 
@@ -53,7 +53,7 @@ public class GenAiSvcImpl implements GenAiSvc {
             );
         } catch (Exception e) {
             LOGGER.error("Error while querying MLFlow model", e);
-            throw new RagTechnicalException("Error while querying MLFlow model", e);
+            throw new TechnicalException("Error while querying MLFlow model", e);
         }
 
         if (responseEntity.getBody() != null && responseEntity.getBody().getResponses() != null) {
@@ -62,7 +62,7 @@ public class GenAiSvcImpl implements GenAiSvc {
             LOGGER.debug(answer.getAnswer());
             return answer;
         } else {
-            throw new RagBusinessException("Could not find any response in MLFlow output");
+            throw new BusinessException("Could not find any response in MLFlow output");
         }
 
     }

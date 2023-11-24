@@ -1,7 +1,7 @@
 package com.databricks.gtm.dao;
 
-import com.databricks.gtm.RagBusinessException;
-import com.databricks.gtm.RagTechnicalException;
+import com.databricks.gtm.exceptions.BusinessException;
+import com.databricks.gtm.exceptions.TechnicalException;
 import com.databricks.gtm.model.AuditEvent;
 import com.databricks.gtm.model.AuditEventId;
 import org.slf4j.Logger;
@@ -22,34 +22,34 @@ public class AuditLogDaoImpl implements AuditLogDao {
     private EntityManager entityManager;
 
     @Override
-    public void persist(AuditEvent event) throws RagTechnicalException {
+    public void persist(AuditEvent event) throws TechnicalException {
         LOGGER.info("Persisting event [{}] for audit purpose", event.getId());
         try {
             entityManager.persist(event);
         } catch (Exception e) {
             LOGGER.error("Error while persisting audit record " + event.getId(), e);
-            throw new RagTechnicalException("Error while persisting audit record", e);
+            throw new TechnicalException("Error while persisting audit record", e);
         }
     }
 
     @Override
-    public AuditEvent getById(AuditEventId id) throws RagBusinessException {
+    public AuditEvent getById(AuditEventId id) throws BusinessException {
         LOGGER.info("Retrieving event [{}] from audit table", id);
         AuditEvent event = entityManager.find(AuditEvent.class, id);
         if (event == null) {
-            throw new RagBusinessException("Could not find record");
+            throw new BusinessException("Could not find record");
         }
         return event;
     }
 
     @Override
-    public void update(AuditEvent event) throws RagTechnicalException {
+    public void update(AuditEvent event) throws TechnicalException {
         LOGGER.info("Updating event [{}] from audit table", event.getId());
         try {
             entityManager.merge(event);
         } catch (Exception e) {
             LOGGER.error("Error while updating audit record " + event, e);
-            throw new RagTechnicalException("Error while persisting audit record", e);
+            throw new TechnicalException("Error while persisting audit record", e);
         }
     }
 }

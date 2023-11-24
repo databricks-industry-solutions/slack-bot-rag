@@ -1,7 +1,7 @@
 package com.databricks.gtm.svc;
 
-import com.databricks.gtm.RagBusinessException;
-import com.databricks.gtm.RagTechnicalException;
+import com.databricks.gtm.exceptions.BusinessException;
+import com.databricks.gtm.exceptions.TechnicalException;
 import com.databricks.gtm.dao.AuditLogDao;
 import com.databricks.gtm.model.AuditEvent;
 import com.databricks.gtm.model.AuditEventId;
@@ -20,7 +20,7 @@ public class AuditLogSvcImpl implements AuditLogSvc {
     private AuditLogDao dao;
 
     @Override
-    public void record(SlackJmsEvent event, MLFlowResponse response) throws RagTechnicalException {
+    public void record(SlackJmsEvent event, MLFlowResponse response) throws TechnicalException {
         LOGGER.info("Persisting new record to audit table");
         AuditEvent auditEvent = new AuditEvent();
         AuditEventId auditEventId = new AuditEventId();
@@ -38,7 +38,7 @@ public class AuditLogSvcImpl implements AuditLogSvc {
     }
 
     @Override
-    public void feedback(AuditEvent event) throws RagBusinessException, RagTechnicalException {
+    public void feedback(AuditEvent event) throws BusinessException, TechnicalException {
         LOGGER.info("Updating record with {} feedback", event.getUseful() ? "positive" : "negative");
         AuditEvent originalRecord = dao.getById(event.getId());
         if (originalRecord != null) {
@@ -46,7 +46,7 @@ public class AuditLogSvcImpl implements AuditLogSvc {
             dao.update(originalRecord);
         } else {
             LOGGER.error("Unable to find record [{}]", event.getId());
-            throw new RagBusinessException("Unable to find record [" + event.getId() + "]");
+            throw new BusinessException("Unable to find record [" + event.getId() + "]");
         }
     }
 

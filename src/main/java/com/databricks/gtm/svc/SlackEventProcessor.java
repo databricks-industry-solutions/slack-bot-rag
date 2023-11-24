@@ -2,8 +2,8 @@ package com.databricks.gtm.svc;
 
 
 import com.databricks.gtm.JmsConfiguration;
-import com.databricks.gtm.RagBusinessException;
-import com.databricks.gtm.RagTechnicalException;
+import com.databricks.gtm.exceptions.BusinessException;
+import com.databricks.gtm.exceptions.TechnicalException;
 import com.databricks.gtm.model.AuditEvent;
 import com.databricks.gtm.model.MLFlowResponse;
 import com.databricks.gtm.model.MLFlowRequest;
@@ -94,7 +94,7 @@ public class SlackEventProcessor {
     }
 
     @JmsListener(destination = JmsConfiguration.SLACK_FEEDBACK_QUEUE, containerFactory = "queueFactory")
-    public void receiveFeedback(AuditEvent event) throws RagBusinessException, RagTechnicalException {
+    public void receiveFeedback(AuditEvent event) throws BusinessException, TechnicalException {
         auditLogSvc.feedback(event);
     }
 
@@ -126,7 +126,7 @@ public class SlackEventProcessor {
             MLFlowResponse response;
             try {
                 response = genAiSvc.chat(conversation);
-            } catch (RagBusinessException | RagTechnicalException e) {
+            } catch (BusinessException | TechnicalException e) {
                 LOGGER.error("Error while querying MLFlow model", e);
                 throw new RuntimeException(e);
             }
@@ -134,7 +134,7 @@ public class SlackEventProcessor {
             // 3. Persist a log record
             try {
                 auditLogSvc.record(event, response);
-            } catch (RagTechnicalException e) {
+            } catch (TechnicalException e) {
                 LOGGER.error("Could not persist audit record", e);
             }
 
