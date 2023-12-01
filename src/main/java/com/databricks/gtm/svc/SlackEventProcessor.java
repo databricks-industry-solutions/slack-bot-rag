@@ -42,6 +42,13 @@ public class SlackEventProcessor {
 
     private List<MLFlowRequest> getThreadHistory(SlackJmsEvent event) {
 
+        // If thread ID is null, this is the first time we're having a conversation
+        // Let's return empty array and build a new thread
+        List<MLFlowRequest> conversation = new ArrayList<>();
+        if (StringUtils.isEmpty(event.getThreadTs())) {
+            return conversation;
+        }
+
         // Get conversation history
         // As we always respond in a thread, we can find the history since threadTs
         ConversationsRepliesRequest request = ConversationsRepliesRequest
@@ -58,10 +65,8 @@ public class SlackEventProcessor {
             history = slackService.getClient().conversationsReplies(request);
         } catch (IOException | SlackApiException e) {
             LOGGER.error("Error while fetching thread history for thread " + event.getThreadTs());
-            return new ArrayList<>();
+            return conversation;
         }
-
-        List<MLFlowRequest> conversation = new ArrayList<>();
 
         if (history.isOk()) {
             MLFlowRequest latestReply = null;

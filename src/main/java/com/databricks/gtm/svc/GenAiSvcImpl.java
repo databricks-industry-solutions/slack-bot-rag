@@ -21,10 +21,10 @@ public class GenAiSvcImpl implements GenAiSvc {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenAiSvc.class);
 
-    @Value("${mlflow.api.token}")
+    @Value("${databricks.mlflow.api.token}")
     private String mlflowApiToken;
 
-    @Value("${mlflow.api.url}")
+    @Value("${databricks.mlflow.api.url}")
     private String mlflowApiUrl;
 
     @Override

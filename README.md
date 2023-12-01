@@ -107,7 +107,7 @@ ngrok http https://localhost:8443
 ![slack_ngrok.png](images%2Fslack_ngrok.png)
 
 According to the image above, our slack event listener will be
-`https://ff51-2600-8800-251b-2000-bc57-5fe3-b529-7f89.ngrok-free.app/slack/events`
+`https://8d78-2600-8800-251b-2000-4844-54e2-9cd1-c55d.ngrok-free.app/slack/events`
 
 **Enable interaction**
 

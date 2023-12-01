@@ -21,10 +21,10 @@ public class SlackConfiguration {
 
     private final SlackSvcImpl slackSvcImpl;
 
-    @Value("${slack.bot.token}")
+    @Value("${databricks.slack.bot.token}")
     private String slackBotToken;
 
-    @Value("${slack.bot.signature.key}")
+    @Value("${databricks.slack.bot.signature.key}")
     private String slackBotSignatureKey;
 
     private JmsTemplate jmsTemplate;
