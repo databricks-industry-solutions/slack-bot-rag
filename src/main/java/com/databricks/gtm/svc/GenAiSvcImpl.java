@@ -1,11 +1,10 @@
 package com.databricks.gtm.svc;
 
 import com.databricks.gtm.exceptions.BusinessException;
-import com.databricks.gtm.exceptions.TechnicalException;
-import com.databricks.gtm.model.MLFlowRequestWrapper;
-import com.databricks.gtm.model.MLFlowResponseWrapper;
-import com.databricks.gtm.model.MLFlowResponse;
 import com.databricks.gtm.model.MLFlowRequest;
+import com.databricks.gtm.model.MLFlowRequestWrapper;
+import com.databricks.gtm.model.MLFlowResponse;
+import com.databricks.gtm.model.MLFlowResponseWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,9 +27,9 @@ public class GenAiSvcImpl implements GenAiSvc {
     private String mlflowApiUrl;
 
     @Override
-    public MLFlowResponse chat(List<MLFlowRequest> conversationHistory) throws BusinessException, TechnicalException {
+    public MLFlowResponse chat(String messageUrn, List<MLFlowRequest> chat) throws BusinessException {
 
-        LOGGER.info("Submitting request to MLFlow model");
+        LOGGER.info("Submitting request {} to MLFlow", messageUrn);
 
         // Prepare header
         HttpHeaders headers = new HttpHeaders();
@@ -38,29 +37,20 @@ public class GenAiSvcImpl implements GenAiSvc {
         headers.add("Authorization", "Bearer " + mlflowApiToken);
 
         // Prepare request
-        MLFlowRequestWrapper<MLFlowRequest> request = new MLFlowRequestWrapper<>(conversationHistory);
-        HttpEntity<MLFlowRequestWrapper<MLFlowRequest>> requestEntity = new HttpEntity<>(request, headers);
+        MLFlowRequestWrapper<MLFlowRequest> wrapped = new MLFlowRequestWrapper<>(chat);
+        HttpEntity<MLFlowRequestWrapper<MLFlowRequest>> requestEntity = new HttpEntity<>(wrapped, headers);
 
         // Prepare response
-        ResponseEntity<MLFlowResponseWrapper<MLFlowResponse>> responseEntity;
-        try {
-            responseEntity = new RestTemplate().exchange(
-                    mlflowApiUrl,
-                    HttpMethod.POST,
-                    requestEntity,
-                    new ParameterizedTypeReference<>() {
-                    }
-            );
-        } catch (Exception e) {
-            LOGGER.error("Error while querying MLFlow model", e);
-            throw new TechnicalException("Error while querying MLFlow model", e);
-        }
+        ResponseEntity<MLFlowResponseWrapper<MLFlowResponse>> responseEntity = new RestTemplate().exchange(
+                mlflowApiUrl,
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<>() {
+                }
+        );
 
         if (responseEntity.getBody() != null && responseEntity.getBody().getResponses() != null) {
-            LOGGER.info("MLFlow call successful, received response");
-            MLFlowResponse answer = responseEntity.getBody().getResponses().get(0);
-            LOGGER.debug(answer.getAnswer());
-            return answer;
+            return responseEntity.getBody().getResponses().get(0);
         } else {
             throw new BusinessException("Could not find any response in MLFlow output");
         }

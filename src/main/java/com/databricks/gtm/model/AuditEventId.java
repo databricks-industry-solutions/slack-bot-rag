@@ -7,17 +7,8 @@ import java.io.Serializable;
 public class AuditEventId implements Serializable {
 
     private String channelId;
-    private String conversationId;
     private String messageId;
-
-    public AuditEventId() {
-    }
-
-    public AuditEventId(String channelId, String conversationId, String messageId) {
-        this.channelId = channelId;
-        this.conversationId = conversationId;
-        this.messageId = messageId;
-    }
+    private String threadId;
 
     public String getChannelId() {
         return channelId;
@@ -25,14 +16,6 @@ public class AuditEventId implements Serializable {
 
     public void setChannelId(String channelId) {
         this.channelId = channelId;
-    }
-
-    public String getConversationId() {
-        return conversationId;
-    }
-
-    public void setConversationId(String conversationId) {
-        this.conversationId = conversationId;
     }
 
     public String getMessageId() {
@@ -43,12 +26,12 @@ public class AuditEventId implements Serializable {
         this.messageId = messageId;
     }
 
-    @Override
-    public String toString() {
-        return "AuditEventId{" +
-                "channelId='" + channelId + '\'' +
-                ", conversationId='" + conversationId + '\'' +
-                ", messageId='" + messageId + '\'' +
-                '}';
+    public String getThreadId() {
+        return threadId;
     }
+
+    public void setThreadId(String threadId) {
+        this.threadId = threadId;
+    }
+
 }

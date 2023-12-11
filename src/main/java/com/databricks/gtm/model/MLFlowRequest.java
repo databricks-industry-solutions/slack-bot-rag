@@ -2,35 +2,17 @@ package com.databricks.gtm.model;
 
 public class MLFlowRequest {
 
-    public static String USER_BOT = "BOT";
-    public static String USER_HUMAN = "HUMAN";
+    String query;
 
-    String user;
-    String text;
-
-    public MLFlowRequest(String user, String text) {
-        this.user = user;
-        this.text = text;
+    public MLFlowRequest(String query) {
+        this.query = query;
     }
 
-    public String getUser() {
-        return user;
+    public String getQuery() {
+        return query;
     }
 
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    @Override
-    public String toString() {
-        return "@" + user + ":\t" + text;
+    public void setQuery(String query) {
+        this.query = query;
     }
 }

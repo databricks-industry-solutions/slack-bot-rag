@@ -1,13 +1,10 @@
 package com.databricks.gtm.svc;
 
+import com.databricks.gtm.dao.AuditLogDao;
 import com.databricks.gtm.exceptions.BusinessException;
 import com.databricks.gtm.exceptions.TechnicalException;
-import com.databricks.gtm.dao.AuditLogDao;
 import com.databricks.gtm.model.AuditEvent;
 import com.databricks.gtm.model.AuditEventId;
-import com.databricks.gtm.model.MLFlowResponse;
-import com.databricks.gtm.model.SlackJmsEvent;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,41 +14,26 @@ import org.springframework.stereotype.Service;
 public class AuditLogSvcImpl implements AuditLogSvc {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuditLogSvc.class);
-    private AuditLogDao dao;
+    private AuditLogDao auditDao;
 
-    @Override
-    public void record(SlackJmsEvent event, MLFlowResponse response) throws TechnicalException {
-        LOGGER.info("Persisting new record to audit table");
-        AuditEvent auditEvent = new AuditEvent();
-        AuditEventId auditEventId = new AuditEventId();
-        auditEventId.setChannelId(event.getChannelId());
-        if (StringUtils.isNotEmpty(event.getThreadTs())) {
-            auditEventId.setConversationId(event.getThreadTs());
-        } else {
-            auditEventId.setConversationId(event.getTs());
-        }
-        auditEventId.setMessageId(event.getTs());
-        auditEvent.setId(auditEventId);
-        auditEvent.setQuery(event.getText());
-        auditEvent.setResponse(response.getAnswer());
-        dao.persist(auditEvent);
+    public void record(String messageUrn, AuditEvent event) throws TechnicalException {
+        LOGGER.info("Persisting event {} to audit table", messageUrn);
+        auditDao.persist(messageUrn, event);
     }
 
-    @Override
-    public void feedback(AuditEvent event) throws BusinessException, TechnicalException {
-        LOGGER.info("Updating record with {} feedback", event.getUseful() ? "positive" : "negative");
-        AuditEvent originalRecord = dao.getById(event.getId());
+    public void feedback(String messageUrn, AuditEventId eventId, boolean positive) throws BusinessException, TechnicalException {
+        LOGGER.info("Updating record {} with {} feedback", messageUrn, positive ? "positive" : "negative");
+        AuditEvent originalRecord = auditDao.getById(messageUrn, eventId);
         if (originalRecord != null) {
-            originalRecord.setUseful(event.getUseful());
-            dao.update(originalRecord);
+            originalRecord.setUseful(positive);
+            auditDao.update(messageUrn, originalRecord);
         } else {
-            LOGGER.error("Unable to find record [{}]", event.getId());
-            throw new BusinessException("Unable to find record [" + event.getId() + "]");
+            throw new BusinessException("Unable to find record " + messageUrn);
         }
     }
 
     @Autowired
-    public void setDao(AuditLogDao dao) {
-        this.dao = dao;
+    public void setAuditDao(AuditLogDao auditDao) {
+        this.auditDao = auditDao;
     }
 }

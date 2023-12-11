@@ -5,7 +5,7 @@ import java.util.List;
 public class MLFlowResponse {
 
     private String answer;
-    private List<String> links;
+    private List<String> references;
 
     public String getAnswer() {
         return answer;
@@ -15,11 +15,11 @@ public class MLFlowResponse {
         this.answer = answer;
     }
 
-    public List<String> getLinks() {
-        return links;
+    public List<String> getReferences() {
+        return references;
     }
 
-    public void setLinks(List<String> links) {
-        this.links = links;
+    public void setReferences(List<String> references) {
+        this.references = references;
     }
 }

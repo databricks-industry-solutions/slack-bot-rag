@@ -11,7 +11,7 @@ import javax.jms.ConnectionFactory;
 @Configuration
 public class JmsConfiguration {
 
-    public static final String SLACK_INTAKE_QUEUE = "urn:dbx:slack:intake";
+    public static final String SLACK_MESSAGE_QUEUE = "urn:dbx:slack:intake";
     public static final String SLACK_FEEDBACK_QUEUE = "urn:dbx:slack:update";
 
     @Bean("queueFactory")

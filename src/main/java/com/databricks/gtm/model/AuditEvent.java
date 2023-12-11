@@ -15,7 +15,13 @@ public class AuditEvent implements Serializable {
     private String query;
 
     @Column(length = 10000)
+    private String username;
+
+    @Column(length = 10000)
     private String response;
+
+    @Column(length = 10000)
+    private String references;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column
@@ -26,7 +32,7 @@ public class AuditEvent implements Serializable {
     private Date updatedDate;
 
     @Column(nullable = true)
-    private Boolean isUseful;
+    private Boolean useful;
 
     @PrePersist
     protected void onCreate() {
@@ -54,12 +60,28 @@ public class AuditEvent implements Serializable {
         this.query = query;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public String getResponse() {
         return response;
     }
 
     public void setResponse(String response) {
         this.response = response;
+    }
+
+    public String getReferences() {
+        return references;
+    }
+
+    public void setReferences(String references) {
+        this.references = references;
     }
 
     public Date getCreatedDate() {
@@ -79,22 +101,10 @@ public class AuditEvent implements Serializable {
     }
 
     public Boolean getUseful() {
-        return isUseful;
+        return useful;
     }
 
     public void setUseful(Boolean useful) {
-        isUseful = useful;
-    }
-
-    @Override
-    public String toString() {
-        return "AuditEvent{" +
-                "id=" + id +
-                ", query='" + query + '\'' +
-                ", response='" + response + '\'' +
-                ", createdDate=" + createdDate +
-                ", updatedDate=" + updatedDate +
-                ", isUseful=" + isUseful +
-                '}';
+        this.useful = useful;
     }
 }

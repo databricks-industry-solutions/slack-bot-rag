@@ -1,25 +1,20 @@
 package com.databricks.gtm;
 
-import com.databricks.gtm.model.AuditEvent;
-import com.databricks.gtm.model.AuditEventId;
 import com.databricks.gtm.svc.SlackSvc;
-import com.databricks.gtm.svc.SlackSvcImpl;
 import com.slack.api.bolt.App;
 import com.slack.api.bolt.AppConfig;
-import com.slack.api.bolt.request.builtin.BlockActionRequest;
-import com.slack.api.model.Message;
-import com.slack.api.model.event.AppMentionEvent;
 import com.slack.api.model.event.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jms.core.JmsTemplate;
 
 @Configuration
 public class SlackConfiguration {
 
-    private final SlackSvcImpl slackSvcImpl;
+    public static final String MESSAGE_FEEDBACK_POSITIVE = "message_feedback_pos";
+    public static final String MESSAGE_FEEDBACK_NEGATIVE = "message_feedback_neg";
+
 
     @Value("${databricks.slack.bot.token}")
     private String slackBotToken;
@@ -27,28 +22,11 @@ public class SlackConfiguration {
     @Value("${databricks.slack.bot.signature.key}")
     private String slackBotSignatureKey;
 
-    private JmsTemplate jmsTemplate;
+    private SlackSvc slackSvc;
 
-    public SlackConfiguration(SlackSvcImpl slackSvcImpl) {
-        this.slackSvcImpl = slackSvcImpl;
-    }
-
-    private AuditEvent buildEvent(BlockActionRequest req, boolean isUseful) {
-        String channelId = req.getPayload().getChannel().getId();
-        Message msg = req.getPayload().getMessage();
-        AuditEventId eventId = new AuditEventId(
-                channelId,
-                msg.getThreadTs(),
-                req.getPayload().getActions().get(0).getValue()
-        );
-        AuditEvent event = new AuditEvent();
-        event.setId(eventId);
-        event.setUseful(isUseful);
-        return event;
-    }
-
-    @Bean("slackService")
+    @Bean("slackClient")
     public App initSlackApp() {
+
         App app = new App(
                 AppConfig
                         .builder()
@@ -57,21 +35,21 @@ public class SlackConfiguration {
                         .build()
         );
 
-        // We subscribe to AppMentionEvent and Message event
-        app.event(AppMentionEvent.class, slackSvcImpl::handleAppMention);
-        app.event(MessageEvent.class, slackSvcImpl::handleMessage);
-
-        // We also capture message positive feedback as interactive message
-        app.blockAction(SlackSvc.MESSAGE_FEEDBACK_POSITIVE, (req, ctx) -> {
-            AuditEvent auditEvent = buildEvent(req, true);
-            jmsTemplate.convertAndSend(JmsConfiguration.SLACK_FEEDBACK_QUEUE, auditEvent);
+        // We subscribe to Message event
+        app.event(MessageEvent.class, (payload, ctx) -> {
+            slackSvc.processMessage(payload);
             return ctx.ack();
         });
 
-        // We also capture message negative feedback as interactive message
-        app.blockAction(SlackSvc.MESSAGE_FEEDBACK_NEGATIVE, (req, ctx) -> {
-            AuditEvent auditEvent = buildEvent(req, false);
-            jmsTemplate.convertAndSend(JmsConfiguration.SLACK_FEEDBACK_QUEUE, auditEvent);
+        // We capture positive feedback as interactive message
+        app.blockAction(MESSAGE_FEEDBACK_POSITIVE, (req, ctx) -> {
+            slackSvc.processFeedback(req, true);
+            return ctx.ack();
+        });
+
+        // We capture negative feedback as interactive message
+        app.blockAction(MESSAGE_FEEDBACK_NEGATIVE, (req, ctx) -> {
+            slackSvc.processFeedback(req, false);
             return ctx.ack();
         });
 
@@ -79,7 +57,7 @@ public class SlackConfiguration {
     }
 
     @Autowired
-    public void setJmsTemplate(JmsTemplate jmsTemplate) {
-        this.jmsTemplate = jmsTemplate;
+    public void setSlackSvc(SlackSvc slackSvc) {
+        this.slackSvc = slackSvc;
     }
 }

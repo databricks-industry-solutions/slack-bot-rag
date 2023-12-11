@@ -2,11 +2,10 @@ package com.databricks.gtm.svc;
 
 
 import com.databricks.gtm.JmsConfiguration;
-import com.databricks.gtm.model.SlackJmsEvent;
+import com.databricks.gtm.model.SlackFeedback;
+import com.databricks.gtm.model.SlackMessage;
 import com.slack.api.app_backend.events.payload.EventsApiPayload;
-import com.slack.api.bolt.context.builtin.EventContext;
-import com.slack.api.bolt.response.Response;
-import com.slack.api.model.event.AppMentionEvent;
+import com.slack.api.bolt.request.builtin.BlockActionRequest;
 import com.slack.api.model.event.MessageEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -23,46 +22,45 @@ public class SlackSvcImpl implements SlackSvc {
     private JmsTemplate jmsTemplate;
 
     @Override
-    public Response handleAppMention(EventsApiPayload<AppMentionEvent> eventsApiPayload, EventContext context) {
+    public void processMessage(EventsApiPayload<MessageEvent> payload) {
 
-        AppMentionEvent event = eventsApiPayload.getEvent();
+        MessageEvent event = payload.getEvent();
+        SlackMessage jmsMessage = new SlackMessage();
+        jmsMessage.setChannelId(event.getChannel());
 
-        // We've been mentioned in a channel, not yet in a thread, let's start a new conversation
-        if (StringUtils.isEmpty(event.getThreadTs())) {
-            SlackJmsEvent eventToProcess = new SlackJmsEvent(
-                    event.getChannel(),
-                    event.getTs(),
-                    event.getThreadTs(),
-                    event.getText()
-            );
-            LOGGER.info("Delegating slack app mention message to queue {}", JmsConfiguration.SLACK_INTAKE_QUEUE);
-            jmsTemplate.convertAndSend(JmsConfiguration.SLACK_INTAKE_QUEUE, eventToProcess);
+        if (StringUtils.isNotEmpty(event.getThreadTs())) {
+            // Conversation is part of an existing thread
+            jmsMessage.setThreadTs(event.getThreadTs());
+        } else {
+            // Conversation is not part of a thread
+            jmsMessage.setThreadTs(event.getTs());
         }
-        return context.ack();
+
+        jmsMessage.setTs(event.getTs());
+        jmsMessage.setUserId(event.getUser());
+        jmsMessage.setText(event.getText());
+
+        LOGGER.info("Publishing message {} to queue", jmsMessage.toUrn());
+        jmsTemplate.convertAndSend(JmsConfiguration.SLACK_MESSAGE_QUEUE, jmsMessage);
     }
 
     @Override
-    public Response handleMessage(EventsApiPayload<MessageEvent> messagePayload, EventContext context) {
+    public void processFeedback(BlockActionRequest action, boolean positive) {
 
-        MessageEvent event = messagePayload.getEvent();
+        SlackFeedback jmsMessage = new SlackFeedback();
+        jmsMessage.setChannelId(action.getPayload().getChannel().getId());
+        jmsMessage.setThreadTs(action.getPayload().getMessage().getThreadTs());
+        jmsMessage.setTs(action.getPayload().getActions().get(0).getValue());
+        jmsMessage.setPositive(positive);
 
-        // A message was received in an existing thread, our time to pick up that conversation
-        if (StringUtils.isNotEmpty(event.getThreadTs())) {
-            SlackJmsEvent eventToProcess = new SlackJmsEvent(
-                    event.getChannel(),
-                    event.getTs(),
-                    event.getThreadTs(),
-                    event.getText()
-            );
-            LOGGER.info("Delegating slack thread message to queue {}", JmsConfiguration.SLACK_INTAKE_QUEUE);
-            jmsTemplate.convertAndSend(JmsConfiguration.SLACK_INTAKE_QUEUE, eventToProcess);
-        }
-        return context.ack();
+        LOGGER.info("Publishing feedback {} to queue", jmsMessage.toUrn());
+        jmsTemplate.convertAndSend(JmsConfiguration.SLACK_FEEDBACK_QUEUE, jmsMessage);
     }
 
     @Autowired
     public void setJmsTemplate(JmsTemplate jmsTemplate) {
         this.jmsTemplate = jmsTemplate;
     }
+
 
 }
