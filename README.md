@@ -30,7 +30,7 @@ Unfortunately, moving from a POC to actionable LLM requires engineering efforts.
 For more information, please refer to our gold standard
 [demo](https://www.databricks.com/resources/demos/tutorials/data-science-and-ai/lakehouse-ai-deploy-your-llm-chatbot)
 that will be kept up to date as new products are released. Checkout the dummy MLFlow 
-example [provided](slack-bot-rag.ipynb) to ensure python function compatibility with our application and enable 
+example [provided](slack-bot-genai.ipynb) to ensure python function compatibility with our application and enable 
 local testing.
 
 While we appreciate we could have used another technology than Java, wrapping business logic and model within
