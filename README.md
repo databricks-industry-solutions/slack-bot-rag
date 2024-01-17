@@ -2,14 +2,19 @@
 
 # GenAI slack bot
 
-*Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam,
-eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores
-eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet,
-consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam
-quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam,
-nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse
-quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?*
+*According to the Massachusetts Institute of Technology, [...] computer science deals with the theory and practice 
+of algorithms, from idealized mathematical procedures to the computer systems deployed by major tech companies to 
+answer billions of user requests per day (source). Such a definition perfectly highlights the broad spectrum of 
+this discipline and the gap that exists between science and engineering, a gap that recently widened even further 
+with recent development of generative AI technologies. If many engineers can experiment with prompts for querying 
+foundational models such as openAI, most may not have the academic knowledge to architect and fine tune a complex 
+Retrieval Augmented Generation (RAG) strategy. Similarly, when most data scientists could follow some tutorial to 
+build their first chatbot applications as part of a proof of concept (POC), only a few will have the field experience 
+to address the challenges of scale, audit and compliance required for enterprise wide adoption and hundreds of 
+thousands of requests a day. As a consequence of this industry chasm, most enterprises experimenting with generative 
+AI applications today are facing challenges moving beyond POC stages. The intent of this solution is not to walk you 
+through yet another tutorial around RAG implementation but to cover the architecture patterns and software design 
+principles required to unleash the true potential of AI at enterprise scale.*
 
 [![DBR](https://img.shields.io/badge/DBR-14.2ML-red?logo=databricks&style=for-the-badge)](https://docs.databricks.com/release-notes/runtime/14.2ml.html)
 [![CLOUD](https://img.shields.io/badge/CLOUD-ALL-blue?logo=googlecloud&style=for-the-badge)](https://databricks.com/try-databricks)
@@ -24,21 +29,19 @@ ___
 ## Motivation and considerations
 
 Everyone can follow some tutorial and build basic POCs on genAI + RAG.
-Unfortunately, moving from a POC to actionable LLM requires engineering efforts.
-
-**Out of scope is the RAG model itself** that we delegate to a mlflow serving endpoint on databricks.
-For more information, please refer to our gold standard
-[demo](https://www.databricks.com/resources/demos/tutorials/data-science-and-ai/lakehouse-ai-deploy-your-llm-chatbot)
-that will be kept up to date as new products are released. Checkout the dummy MLFlow 
-example [provided](slack-bot-genai.ipynb) to ensure python function compatibility with our application and enable 
+Unfortunately, moving from a POC to actionable LLM requires engineering efforts. 
+**Out of scope is the RAG model itself** that we gladly delegate to a mlflow serving endpoint on databricks. For more 
+information, please refer to our gold standard [demo](https://www.databricks.com/resources/demos/tutorials/data-science-and-ai/lakehouse-ai-deploy-your-llm-chatbot) that will be kept up to date as new products are released. 
+Checkout the MLFlow example [provided](slack-bot-genai.ipynb) to ensure python function compatibility with our application and enable 
 local testing.
 
-While we appreciate we could have used another technology than Java, wrapping business logic and model within
-python stack, we wanted to separate both logics on purpose. The rationale is 2 folds:
+While we appreciate we could have used another technology than Java such as JS or Python, we wanted to separate 
+both logics on purpose. The rationale is 3 folds:
 
 - Ensure independence of models, offering the ability for user to build different LLMs, different prompts, surfacing
   models via a same endpoint that can easily be load balanced within impacting slack application.
 - Ensure engineering reliability and maintainability of a slack application to support larger scale deployments
+- Leverage decades of design patterns and code reusability for enterprise wide application
 
 As a consequence, we relied on Java based application and spring framework to handle our core business logic.
 
@@ -91,7 +94,7 @@ application on https://databricks.slack.com/apps. In the following example, we c
 
 ![slack_app_config_events.png](images%2Fslack_app_config_events.png)
 
-We need to subscribe to both the `app_mention` and `messages.channel` events. While the former will
+We may want to subscribe to both the `app_mention` and `messages.channel` events. While the former will
 be triggered any time someone mentions our bot (using 'at' keyword), the latter will be used to monitor
 conversation within a given thread and provide our genAI capability with all conversational history for
 more relevant output.
@@ -107,7 +110,11 @@ ngrok http https://localhost:8443
 ![slack_ngrok.png](images%2Fslack_ngrok.png)
 
 According to the image above, our slack event listener will be
-`https://c33d-165-1-215-171.ngrok-free.app/slack/events`
+`https://6b1e-165-1-215-171.ngrok-free.app/slack/events`
+
+Please note that some tutorial online would recommend the use of websocket APIs. Although quicker and easier, this
+pattern is however reserved for proof of concepts, forcing you to invest additional time securing and maintaining 
+connection.
 
 **Enable interaction**
 
