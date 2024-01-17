@@ -4,7 +4,7 @@
 
 *According to the Massachusetts Institute of Technology, [...] computer science deals with the theory and practice 
 of algorithms, from idealized mathematical procedures to the computer systems deployed by major tech companies to 
-answer billions of user requests per day (source). Such a definition perfectly highlights the broad spectrum of 
+answer billions of user requests per day. Such a definition perfectly highlights the broad spectrum of 
 this discipline and the gap that exists between science and engineering, a gap that recently widened even further 
 with recent development of generative AI technologies. If many engineers can experiment with prompts for querying 
 foundational models such as openAI, most may not have the academic knowledge to architect and fine tune a complex 
