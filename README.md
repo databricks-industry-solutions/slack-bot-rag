@@ -26,6 +26,8 @@ ___
 
 ___
 
+![reference_architecture](images/reference_architecture.png)
+
 ## Motivation and considerations
 
 Everyone can follow some tutorial and build basic POCs on genAI + RAG.
